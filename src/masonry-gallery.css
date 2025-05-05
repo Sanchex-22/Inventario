@@ -1,0 +1,60 @@
+/* Estilos adicionales para la galería tipo masonry */
+.masonry-gallery {
+    column-gap: 1.5rem;
+  }
+  
+  .masonry-item {
+    position: relative;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 3px solid white;
+    transition: all 0.3s ease;
+  }
+  
+  .masonry-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 0px solid white;
+    transition: all 0.3s ease;
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  .masonry-item:hover::before {
+    border-width: 6px;
+  }
+  
+  /* Animaciones para SectionReveal */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fadeIn {
+    animation: fadeIn 0.8s ease forwards;
+  }
+  
+  /* Estilos para móvil - grid uniforme */
+  @media (max-width: 639px) {
+    .mobile-uniform-grid {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+      columns: unset !important;
+    }
+  
+    .mobile-uniform {
+      aspect-ratio: 1 / 1 !important; /* Todas las imágenes cuadradas en móvil */
+      margin-bottom: 0 !important;
+    }
+  }
+  
