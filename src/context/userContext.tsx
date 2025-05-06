@@ -1,7 +1,6 @@
-import React, { ReactNode, useState } from 'react';
-import { authServices } from '../services/authentication';
+import React, { ReactNode, useEffect, useState } from "react";
+import { auth } from "../firebase/firebase";
 
-// Define types for the context value
 interface UserContextValue {
   jwt: string | null;
   setJWT: React.Dispatch<React.SetStateAction<string | null>>;
@@ -14,11 +13,16 @@ interface UserContextProps {
 }
 
 export function UserContextProvider({ children }: UserContextProps) {
-  const [jwt, setJWT] = useState<string | null>(() => {
-    const currentUser = authServices.getCurrentUser();
-    return currentUser ? JSON.stringify(currentUser) : null;
-  });
+  const [jwt, setJWT] = useState<string | null>(null);
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async user => {
+      const token = await user?.getIdToken();
+      setJWT(token ? JSON.stringify(token) : null);
+    });
+    return () => unsubscribe();
+  }, []);
+  console.log("JWT:", jwt);
   return (
     <Context.Provider value={{ jwt, setJWT }}>
       {children}

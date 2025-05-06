@@ -1,6 +1,7 @@
 import { jwtDecode } from "jwt-decode"
 
 export interface DecodedToken {
+    email: string
     id: string
     username: string
     roles: string

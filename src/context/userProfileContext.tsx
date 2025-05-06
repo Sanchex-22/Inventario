@@ -1,7 +1,7 @@
 // UserProfileContext.tsx
 import React, { ReactNode, useState, useMemo } from 'react';
 import { decodeTokenPublic } from '../utils/decode';
-import { authServices } from '../services/authentication';
+import { auth } from '../firebase/firebase';
 
 // Interfaz para los metadatos decodificados
 export type DecodedMetaData = {
@@ -35,8 +35,10 @@ export type UserProfileProviderProps = {
 
 export function UserProfileProvider({ children }: UserProfileProviderProps) {
   // Obtener el JWT desde localStorage (o donde esté guardado)
+  console.log(auth.currentUser)
   const [jwt] = useState<string | null>(() => {
-    const currentUser = authServices.getCurrentUser();
+    const currentUser = auth.currentUser;
+    console.log('Current User:', currentUser)
     return currentUser ? JSON.stringify(currentUser) : null;
   });
 

@@ -1,8 +1,7 @@
-import React, { useCallback, useContext, useState } from 'react';
-import Context from '../context/userContext';
-import { authServices } from '../services/authentication';
+import React, { useCallback, useContext, useState } from "react";
+import Context from "../context/userContext";
+import { auth } from "../firebase/firebase"; // 👈 Importa auth desde compat
 
-// Define types for the context value and hook return type
 interface UserContextValue {
   jwt: string | null;
   setJWT: React.Dispatch<React.SetStateAction<string | null>>;
@@ -20,28 +19,29 @@ export default function useUser(): UseUserReturn {
   const { jwt, setJWT } = useContext(Context) as UserContextValue;
   const [state, setState] = useState<{ loading: boolean; error: boolean }>({ loading: false, error: false });
 
-  const login = useCallback(async ({ email, password }: { email: string; password: string }): Promise<void> => {
+  const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
     setState({ loading: true, error: false });
 
     try {
-      const token = await authServices.login(email, password);
-      // window.sessionStorage.setItem('jwt', token);
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      console.log("UserCredential:", userCredential); // 👈 Verifica el UserCredential en la consola
+      const token = await userCredential.user?.getIdToken();
+      console.log("Token:", token); // 👈 Verifica el token en la consola
+      setJWT(JSON.stringify(token));
       setState({ loading: false, error: false });
-      setJWT(token);
     } catch (err) {
-      window.sessionStorage.removeItem('jwt');
+      window.sessionStorage.removeItem("jwt");
       setState({ loading: false, error: true });
       console.error(err);
-      throw err; // Rethrow the error to be handled by the calling function
+      throw err;
     }
   }, [setJWT]);
 
-  const logout = useCallback(async() : Promise<void> => {
-    if (jwt) {
-      authServices.logout(jwt.replace(/^"|"$/g, ''));
-      setJWT(null);
-    }
-  }, [setJWT, jwt]);
+  const logout = useCallback((): void => {
+    auth.signOut();
+    setJWT(null);
+  }, [setJWT]);
+  console.log(Boolean(jwt))
 
   return {
     isLogged: Boolean(jwt),
