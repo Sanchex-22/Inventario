@@ -24,9 +24,11 @@ export default function useUser(): UseUserReturn {
 
     try {
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
-      console.log("UserCredential:", userCredential); // 👈 Verifica el UserCredential en la consola
+      localStorage.setItem('authUser', JSON.stringify(userCredential));
+      console.log("UserCredential:", userCredential);
       const token = await userCredential.user?.getIdToken();
-      console.log("Token:", token); // 👈 Verifica el token en la consola
+      localStorage.setItem('jwt', JSON.stringify(userCredential));
+      console.log("Token:", token);
       setJWT(JSON.stringify(token));
       setState({ loading: false, error: false });
     } catch (err) {

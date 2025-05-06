@@ -1,13 +1,13 @@
 // UserProfileContext.tsx
-import React, { ReactNode, useState, useMemo } from 'react';
-import { decodeTokenPublic } from '../utils/decode';
+import React, { ReactNode, useState, useMemo, useEffect } from 'react';
+import { decodeToken, decodeTokenPublic } from '../utils/decode';
 import { auth } from '../firebase/firebase';
 
 // Interfaz para los metadatos decodificados
 export type DecodedMetaData = {
   id: string;
   username: string;
-  email?: string;
+  identities?: string;
   roles?: string;
 }
 
@@ -35,30 +35,41 @@ export type UserProfileProviderProps = {
 
 export function UserProfileProvider({ children }: UserProfileProviderProps) {
   // Obtener el JWT desde localStorage (o donde esté guardado)
-  console.log(auth.currentUser)
-  const [jwt] = useState<string | null>(() => {
-    const currentUser = auth.currentUser;
-    console.log('Current User:', currentUser)
-    return currentUser ? JSON.stringify(currentUser) : null;
-  });
+  const [jwt,setJWT] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async user => {
+      const token = await user?.getIdToken();
+      setJWT(token ? JSON.stringify(token) : null);
+    });
+    return () => unsubscribe();
+  }, []);
+  console.log("JWT:", jwt);
 
   // Decodificar el token y extraer metadata solo una vez
   const metaData = useMemo<DecodedMetaData | null>(() => {
     const decoded = decodeTokenPublic(jwt);
-    return decoded?.metaData ?? null;
+    return decoded?.firebase ?? null;
   }, [jwt]);
+  console.log("MetaData:", metaData?.identities?.email?.[0]);
 
   // Estado del perfil de usuario
-  const [profile, setProfile] = useState<UserProfile | null>(() =>
-    metaData
-      ? {
-          id: metaData.id,
-          username: metaData.username,
-          email: metaData.email ?? '',
-          roles: metaData.roles ?? 'user'
-        }
-      : null
-  );
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (metaData) {
+      setProfile({
+        id: metaData?.id ?? 'user',
+        username: metaData?.username ?? 'user',
+        email: metaData?.identities?.email?.[0] ?? 'valor0',
+        roles: metaData?.roles ?? 'user',
+      });
+    }
+  }, [metaData]);
+  
+
+  console.log("Profile:", profile);
+
 
   return (
     <UserProfileContext.Provider value={{ profile, setProfile }}>

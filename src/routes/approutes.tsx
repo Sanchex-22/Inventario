@@ -48,6 +48,7 @@ export const AppRoutes: React.FC<Props> = ({ pathnameLocation }) => {
   }, [isLogged, pathname]);
 
   const userRole = profile?.roles || "user";
+  console.log(profile)
   const user: User = {
     isSignedIn: isLogged,
     roles: [userRole],

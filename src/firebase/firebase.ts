@@ -1,6 +1,7 @@
 // firebase.ts
 import firebase from "firebase/compat/app";
-import "firebase/compat/auth"; // 👈 Necesario para habilitar app.auth()
+import "firebase/compat/auth";
+import "firebase/compat/database"; // 👈 Necesario para usar realtime database
 
 const app = firebase.initializeApp({
   apiKey: import.meta.env.VITE_API_KEY,
@@ -12,5 +13,87 @@ const app = firebase.initializeApp({
   measurementId: import.meta.env.VITE_MEASUREMENT_ID,
 });
 
-export const auth = app.auth(); // ✅ Ahora sí funciona
-export default app;
+class Firebase {
+  auth: firebase.auth.Auth;
+  db: firebase.database.Database;
+  serverValue: typeof firebase.database.ServerValue;
+  emailAuthProvider: typeof firebase.auth.EmailAuthProvider;
+  googleProvider: firebase.auth.GoogleAuthProvider;
+  facebookProvider: firebase.auth.FacebookAuthProvider;
+  twitterProvider: firebase.auth.TwitterAuthProvider;
+
+  constructor() {
+    this.auth = app.auth();
+    this.db = app.database();
+
+    this.serverValue = firebase.database.ServerValue;
+    this.emailAuthProvider = firebase.auth.EmailAuthProvider;
+
+    this.googleProvider = new firebase.auth.GoogleAuthProvider();
+    this.facebookProvider = new firebase.auth.FacebookAuthProvider();
+    this.twitterProvider = new firebase.auth.TwitterAuthProvider();
+  }
+
+  doCreateUserWithEmailAndPassword = (email: string, password: string) =>
+    this.auth.createUserWithEmailAndPassword(email, password);
+
+  doSignInWithEmailAndPassword = (email: string, password: string) =>
+    this.auth.signInWithEmailAndPassword(email, password);
+
+  doSignInWithGoogle = () => this.auth.signInWithPopup(this.googleProvider);
+  doSignInWithFacebook = () => this.auth.signInWithPopup(this.facebookProvider);
+  doSignInWithTwitter = () => this.auth.signInWithPopup(this.twitterProvider);
+
+  doSignOut = () => this.auth.signOut();
+
+  doPasswordReset = (email: string) => this.auth.sendPasswordResetEmail(email);
+
+  doSendEmailVerification = () =>
+    this.auth.currentUser?.sendEmailVerification({
+      url: import.meta.env.VITE_CONFIRMATION_EMAIL_REDIRECT,
+    });
+
+  doPasswordUpdate = (password: string) =>
+    this.auth.currentUser?.updatePassword(password);
+
+  onAuthUserListener = (
+    next: (user: firebase.User | null) => void,
+    fallback: () => void
+  ) =>
+    this.auth.onAuthStateChanged(authUser => {
+      if (authUser) {
+        this.user(authUser.uid)
+          .once("value")
+          .then(snapshot => {
+            const dbUser = snapshot.val();
+
+            if (!dbUser.roles) {
+              dbUser.roles = {};
+            }
+
+            const mergedUser = {
+              uid: authUser.uid,
+              email: authUser.email,
+              emailVerified: authUser.emailVerified,
+              providerData: authUser.providerData,
+              ...dbUser,
+            };
+
+            next(mergedUser);
+          });
+      } else {
+        fallback();
+      }
+    });
+
+  // *** User and Message API ***
+
+  user = (uid: string) => this.db.ref(`users/${uid}`);
+  users = () => this.db.ref("users");
+
+  message = (uid: string) => this.db.ref(`messages/${uid}`);
+  messages = () => this.db.ref("messages");
+}
+
+export const auth = app.auth();
+export default Firebase;

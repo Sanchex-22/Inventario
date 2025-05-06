@@ -10,7 +10,7 @@ export interface DecodedToken {
   }
 
   export interface DecodedTokenPublic {
-    metaData: DecodedToken
+    firebase: DecodedToken
   }
 export const decodeToken = (): DecodedToken | null => {
   const token = localStorage.getItem('jwt')
@@ -27,9 +27,10 @@ export const decodeToken = (): DecodedToken | null => {
 
 export const decodeTokenPublic = (jwt: string | null): DecodedTokenPublic | null => {
   if (!jwt) return null
-
+  console.log("JWT:", jwt)  
   try {
     const decoded = jwtDecode<DecodedTokenPublic>(jwt)
+    console.log("Decoded:", decoded)
     return decoded
   } catch (error) {
     console.error('Error decoding token:', error)
